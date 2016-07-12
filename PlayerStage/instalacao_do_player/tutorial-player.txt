@@ -1,0 +1,228 @@
+PASSOS P INSTALACAO DO PLAYER
+
+1) download source, versao 3.0.2, http://sourceforge.net/projects/playerstage/files/Player/
+
+2) Compilação e instalação
+
+anstes de iniciar a instalação, certiifique-se que estes pacotes estao instalados
+$ sudo apt-get install cmake-curses-gui
+$ sudo apt-get install libboost-all-dev
+$ sudo apt-get install libgnomecanvas2-dev libgnomecanvasmm-2.6-dev python-gnome2
+
+seguir passsos do link http://www.control.aau.dk/~tb/wiki/index.php/Installing_Player_and_Stage_in_Ubuntu
+$ cd player-<version>
+$ mkdir build
+$ cd build
+$ ccmake ../   <= selecionar pacotes que devem ser instalados. prestar atencao nas msg de warning !
+$ cmake ../    <= prestar atencao nas msg de warning ! verificar se existem dependencias a serem resolvidas
+$ make
+
+possivelmente vai acontecer o seguinte erro:
+
+/home/ale/Downloads/player-3.0.2/server/drivers/rfid/skyetekM1.cc:622:11: warning: variable ‘s_rwStatus’ set but not used [-Wunused-but-set-variable]
+[ 75%] Building CXX object server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/rfid/acr120u.o
+[ 75%] Building CXX object server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/shell/cmdsplitter.o
+[ 75%] Building CXX object server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/shell/diocmd.o
+[ 75%] Building CXX object server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/shell/dummy.o
+[ 75%] Building CXX object server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/shell/gripcmd.o
+[ 76%] Building CXX object server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/shell/inhibitor.o
+[ 76%] Building CXX object server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/shell/kartowriter.o
+[ 76%] Building CXX object server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/shell/writelog.o
+[ 76%] Building CXX object server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/shell/encode.o
+[ 77%] Building CXX object server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/shell/readlog_time.o
+[ 77%] Building CXX object server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/shell/readlog.o
+/home/ale/Downloads/player-3.0.2/server/drivers/shell/readlog.cc: In member function ‘virtual void ReadLog::Main()’:
+/home/ale/Downloads/player-3.0.2/server/drivers/shell/readlog.cc:668:43: error: cannot convert ‘FILE* {aka _IO_FILE*}’ to ‘gzFile’ for argument ‘1’ to ‘off_t gzseek(gzFile, off_t, int)’
+/home/ale/Downloads/player-3.0.2/server/drivers/shell/readlog.cc:714:62: error: cannot convert ‘FILE* {aka _IO_FILE*}’ to ‘gzFile’ for argument ‘1’ to ‘char* gzgets(gzFile, char*, int)’
+make[2]: *** [server/libplayerdrivers/CMakeFiles/playerdrivers.dir/__/drivers/shell/readlog.o] Error 1
+make[1]: *** [server/libplayerdrivers/CMakeFiles/playerdrivers.dir/all] Error 2
+make: *** [all] Error 2
+ale@robot:~/Downloads/player-3.0.2/build$ geany /home/ale/Downloads/player-3.0.2/server/drivers/shell/readlog.cc &
+
+
+A solucao deste erro eh simples. no arquivo /home/ale/Downloads/player-3.0.2/server/drivers/shell/readlog.cc
+linhas 668 e 714, realizar a seguinte modificação.
+
+ret = gzseek(this->file,0,SEEK_SET);
+to
+ret = gzseek((gzFile)this->file,0,SEEK_SET);
+
+esta solucao foi encontrada em http://sourceforge.net/p/playerstage/mailman/message/28996935/
+
+
+$ sudo make install   # You need administrator privileges if you install in the default /usr/local, hence sudo.
+
+TODO: nao compilei o Player com o driver p ARToolkit.
+para isso, eh necessario 1o instalar o ARToolkit e depois repetir o processo de compilacao do Player.
+
+3) testando o player
+fonte: http://playerstage.sourceforge.net/doc/Player-cvs/player/start.html
+
+$ player /usr/local/share/player/config/pioneer.cfg 
+
+Registering driver
+Player v.3.0.2
+
+* Part of the Player/Stage/Gazebo Project [http://playerstage.sourceforge.net].
+* Copyright (C) 2000 - 2009 Brian Gerkey, Richard Vaughan, Andrew Howard,
+* Nate Koenig, and contributors. Released under the GNU General Public License.
+* Player comes with ABSOLUTELY NO WARRANTY.  This is free software, and you
+* are welcome to redistribute it under certain conditions; see COPYING
+* for details.
+
+/usr/local/share/player/config/pioneer.cfg:15 error: unknown interface: [sound]
+/usr/local/share/player/config/pioneer.cfg:15 error: unknown interface: [sound]
+/usr/local/share/player/config/pioneer.cfg:15 error: unknown interface: [sound]
+/usr/local/share/player/config/pioneer.cfg:15 error: unknown interface: [sound]
+/usr/local/share/player/config/pioneer.cfg:15 error: unknown interface: [sound]
+/usr/local/share/player/config/pioneer.cfg:15 error: unknown interface: [sound]
+/usr/local/share/player/config/pioneer.cfg:15 warning: field [provides] has unused element 10
+listening on 6665
+Listening on ports: 6665 
+
+não vai acontecer nada pois nao temos o robo. para ter animacao/simulacao eh necessario compilar tb o stage.
+
+
+4) compilação dos exemplos
+
+fontes: 
+ - http://playerstage.sourceforge.net/doc/Player-cvs/player/group__cplusplus__example.html
+ - http://www.csupomona.edu/~ftang/courses/player%20stage/player-stage-intro.htm
+
+
+incluir a seguinte linha no final do arquivo ~/.bashrc
+
+# linha necessaria p poder compilar com Player
+export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig/:$PKG_CONFIG_PATH
+
+Ao executar este comando 
+$ pkg-config --cflags playerc++
+a saida deve ser 
+-I/usr/local/include/player-3.0  
+
+$ mkdir meus_exemplos
+$ cd meus_exemplos
+$ ccmake /usr/local/share/player/examples/libplayerc++  <= pressione 'c' e 'g'
+$ cmake
+$ make
+isto vai gerar varias msg de compilacao dos exemplos e vários executáveis
+ale@robot:~/Downloads/player-3.0.2/meus_exemplos$ ll
+total 1148
+drwxrwxr-x  3 ale ale   4096 Mai 17 12:17 ./
+drwxrwxr-x 24 ale ale   4096 Mai 17 12:23 ../
+-rwxrwxr-x  1 ale ale  21351 Mai 17 12:16 camera*
+-rwxrwxr-x  1 ale ale  21505 Mai 17 12:16 clientgraphics*
+-rwxrwxr-x  1 ale ale  21406 Mai 17 12:16 clientgraphics3d*
+-rw-rw-r--  1 ale ale  13724 Mai 17 12:16 CMakeCache.txt
+drwxrwxr-x 21 ale ale   4096 Mai 17 12:17 CMakeFiles/
+-rw-rw-r--  1 ale ale   1647 Mai 17 12:16 cmake_install.cmake
+-rwxrwxr-x  1 ale ale  46149 Mai 17 12:16 example0*
+-rwxrwxr-x  1 ale ale 193281 Mai 17 12:16 example1*
+-rwxrwxr-x  1 ale ale 142451 Mai 17 12:17 example2*
+-rwxrwxr-x  1 ale ale  33903 Mai 17 12:17 example3*
+-rwxrwxr-x  1 ale ale  46229 Mai 17 12:17 example4*
+-rwxrwxr-x  1 ale ale 146446 Mai 17 12:17 goto*
+-rwxrwxr-x  1 ale ale  20983 Mai 17 12:17 grip*
+-rwxrwxr-x  1 ale ale  51716 Mai 17 12:17 laserobstacleavoid*
+-rw-rw-r--  1 ale ale  20548 Mai 17 12:16 Makefile
+-rwxrwxr-x  1 ale ale  51454 Mai 17 12:17 ptz*
+-rwxrwxr-x  1 ale ale  56418 Mai 17 12:17 randomwalk*
+-rwxrwxr-x  1 ale ale  51657 Mai 17 12:17 sonarobstacleavoid*
+-rwxrwxr-x  1 ale ale  21215 Mai 17 12:17 speech*
+-rwxrwxr-x  1 ale ale 104955 Mai 17 12:17 speech_cpp_client*
+-rwxrwxr-x  1 ale ale  46507 Mai 17 12:17 wallfollow*
+
+
+5) download, compilacao e instalacao do stage 4.1.1
+
+https://github.com/rtv/Stage/archive/master.zip
+
+de acordo com o arquivo INSTALL.txt, este pacotes devem ser instalados inicialmente
+
+$ sudo apt-get install git cmake g++ fltk1.1-dev libjpeg8-dev libpng12-dev libglu1-mesa-dev libltdl-dev	
+
+execute este comando para ele achar o Player
+
+$ pkg-config --modversion playercore
+
+não nao mostrar a versao do Player, certifique-se de configurar o comando com 
+
+$ export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig/:$PKG_CONFIG_PATH
+
+execute o prox comand verificando se todas as libs e dependencias relevantes foram encontradas.
+
+$ cmake .
+
+execute o prox comando para verificar as configuracoes de compilacao
+
+$ ccmake .
+
+execute o prox comando para realizar a compilação
+
+$ make .
+
+execute o prox comando para instalar no dir /usr/local
+Stage will install its components in various directories, for example:
+
+	<prefix>/bin    (executables, including the 'stage' program)  
+	<prefix>/lib    (libraries, including libstage)  
+	<prefix>/share  (contains data resources, such as images)
+
+Os exemplos de mundos estão instalados no dir
+/usr/local/share/stage/worlds/
+
+os includes estao em /usr/local/include/Stage-4.1/
+
+$ sudo make install
+
+6) configuracao do stage
+
+export LD_LIBRARY_PATH=/usr/local/lib64
+export PLAYER_PATH=/usr/local/lib64
+export STAGEPATH=/usr/local/lib64
+
+o prox cmd vai executar o stage com um robo vermelho
+$ stage worlds/simple.world
+
+
+Outras fontes
+ - http://yorkroboticist.blogspot.com.br/2011/12/installing-playerstage-in-ubuntu-1110.html
+ http://yorkroboticist.blogspot.com.br/2011/12/upgrading-to-ubuntu-1110-with.html
+ 
+6) verificando compilacao 
+ fonte: http://mobotica.blogspot.com.br/2010/03/installing-player-stage-what-worked-for.html
+ 
+$ mkdir meus_exemplos
+$ cd meus_exemplos
+$ cp /usr/local/share/player/examples/libplayerc++/args.h .
+$ cp /usr/local/share/player/examples/libplayerc++/laserobstacleavoid.cc .
+$ g++ -o laserobstacleavoid `pkg-config --cflags playerc++` laserobstacleavoid.cc `pkg-config --libs playerc++`
+
+verifique se o executavel foi gerado
+
+
+7) teste
+
+em um terminal execute 
+$ player /usr/local/share/stage/worlds/simple.cfg
+
+em outro terminal execute 
+$ playerv --position2d --ranger
+
+duas diferentes janelas de visualizacao serão abertas. experimente mover o 
+robo vermelho na janela do stage. Note que a janela do PlayerViewer detecta
+as mudanças no ambiente a medida que vc movo o robô.
+
+De forma similar, experimente mudar a posição do robo na janela do PlayerViewer.
+1o, habilite esta opção no menu devices->position2d->command
+click no centro do robô e arraste para outra posição. Note que agora o robo
+se move na janela do Stage. Experimente habilitar os outros senrores na janela do PlayerViewer.
+
+
+O proximo passo é fazer o robô se mover sozinho.
+
+
+
+ 
+ 
+ 
